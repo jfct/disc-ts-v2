@@ -1,0 +1,15 @@
+{
+	"extends": "@sapphire/ts-config",
+	"compilerOptions": {
+		"module": "CommonJS",
+		"rootDir": "./src",
+		"outDir": "./dist",
+		"tsBuildInfoFile": "dist/.tsbuildinfo",
+		"skipLibCheck": true,
+		"noUnusedLocals": false,
+		"noImplicitAny": false,
+		"importsNotUsedAsValues": "preserve"
+	},
+	"include": ["./src/**/*.ts"],
+	"exclude": ["node_modules"]
+}
