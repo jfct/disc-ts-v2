@@ -2,7 +2,7 @@ import { ApplyOptions } from '@sapphire/decorators';
 import { Command, CommandOptions } from '@sapphire/framework';
 import { send } from '@sapphire/plugin-editable-commands';
 import { Message, VoiceChannel } from 'discord.js';
-import { errorCodes, errorMessage } from '../../errorMessages';
+import { errorCodes, errorMessage } from '../../errors/errorMessages';
 import { Voice } from '../../lib/Voice';
 
 @ApplyOptions<CommandOptions>({

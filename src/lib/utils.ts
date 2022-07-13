@@ -20,3 +20,11 @@ export function pickRandom<T>(array: readonly T[]): T {
 export function sendLoadingMessage(message: Message): Promise<typeof message> {
 	return send(message, { embeds: [new MessageEmbed().setDescription(pickRandom(RandomLoadingMessage)).setColor('#FF0000')] });
 }
+
+export function matchYoutubeUrl(url: string) {
+	const p = /^(?:https?:\/\/)?(?:m\.|www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/;
+	if (url.match(p)) {
+		return true;
+	}
+	return false;
+}

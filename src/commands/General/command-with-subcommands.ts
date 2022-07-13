@@ -6,7 +6,12 @@ import type { Message } from 'discord.js';
 @ApplyOptions<SubCommandPluginCommandOptions>({
 	aliases: ['cws'],
 	description: 'A basic command with some subcommands',
-	subCommands: ['add', { input: 'create', output: 'add' }, 'remove', 'reset', { input: 'show', default: true }]
+	subCommands: [
+		'add',
+		{ input: 'create', output: 'add' },
+		'remove',
+		'reset',
+		{ input: 'show', default: true }]
 })
 export class UserCommand extends SubCommandPluginCommand {
 	// Anyone should be able to view the result, but not modify

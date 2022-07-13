@@ -1,8 +1,7 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { PaginatedMessage } from '@sapphire/discord.js-utilities';
-import { Command, CommandOptions } from '@sapphire/framework';
-import type { Message } from 'discord.js';
-import { MessageEmbed } from 'discord.js';
+import { Args, Command, CommandOptions } from '@sapphire/framework';
+import { Message, MessageEmbed } from 'discord.js';
 import { sendLoadingMessage } from '../../lib/utils';
 
 @ApplyOptions<CommandOptions>({
@@ -11,7 +10,7 @@ import { sendLoadingMessage } from '../../lib/utils';
 	generateDashLessAliases: true
 })
 export class UserCommand extends Command {
-	public async messageRun(message: Message) {
+	public async messageRun(message: Message, args: Args) {
 		const response = await sendLoadingMessage(message);
 
 		const paginatedMessage = new PaginatedMessage({

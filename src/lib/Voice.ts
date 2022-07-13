@@ -103,15 +103,23 @@ export class Voice {
 
 		const newVoice = await Voice.createConnection(voiceChannel);
 		const player = await Voice.createPlayer(voiceChannel);
+		const info = await ytdl.getInfo(url);
+
+		const title = info.videoDetails.title;
+		const musicLength = info.videoDetails.lengthSeconds;
+		const channelName = info.videoDetails.ownerChannelName;
+
+		console.log(info);
+
 		const stream = ytdl(url, { filter: 'audioonly' });
 		const resource = createAudioResource(stream);
 
-		console.log('RES => ', resource);
+		// console.log('RES => ', resource);
 
-		if (!(player.state.status === AudioPlayerStatus.Playing)) {
-			player.play(resource);
-			newVoice.connection.subscribe(player);
-		}
+		// if (!(player.state.status === AudioPlayerStatus.Playing)) {
+		// 	player.play(resource);
+		// 	newVoice.connection.subscribe(player);
+		// }
 
 		// if (newVoice.player?.state === AudioPlayerPlayingState) {
 		// 	console.log('Playing...');

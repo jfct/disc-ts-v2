@@ -2,6 +2,7 @@ import { ApplyOptions } from '@sapphire/decorators';
 import { Command, CommandOptions } from '@sapphire/framework';
 import { send } from '@sapphire/plugin-editable-commands';
 import type { Message } from 'discord.js';
+import { UserService } from '../../entities/user/user.service';
 
 @ApplyOptions<CommandOptions>({
 	description: 'ping pong'
@@ -14,6 +15,15 @@ export class UserCommand extends Command {
 			(msg.editedTimestamp || msg.createdTimestamp) - (message.editedTimestamp || message.createdTimestamp)
 		}ms.`;
 
-		return send(message, content);
+		try {
+			const res = await UserService.create({
+				discordId: message.author.id
+			});
+			console.log('res => ', res);
+			return send(message, content);
+		} catch (err) {
+			console.log(err);
+			return send(message, 'Error!');
+		}
 	}
 }
