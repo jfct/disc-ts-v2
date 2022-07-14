@@ -7,7 +7,7 @@ import {
 	joinVoiceChannel,
 	VoiceConnectionStatus
 } from '@discordjs/voice';
-import { TextChannel, VoiceChannel } from 'discord.js';
+import { VoiceChannel } from 'discord.js';
 import ytdl from 'ytdl-core';
 import { client, RadioManager, voiceConnections } from '..';
 import { EmbedComponents } from '../components/Embeds.components';
@@ -71,34 +71,11 @@ export class Voice {
 
 		voiceConnection.voice.player = player;
 
-		player.on(AudioPlayerStatus.Idle, async (oldState, newState) => {
-			// console.log('oldState iDLE => ', oldState);
-			// console.log('newState => ', newState);
+		player.on(AudioPlayerStatus.Idle, async () => {
+			this.playNextRequest(channel);
 
-			// CHECK FOR LIST
-			const requests = await RequestService.getRequestList();
-
-			// If in radio mode, add more
-			if (RadioManager.currentMode() == RadioModes.RADIO && requests.length < 10) {
-				RadioManager.addSongs(10, `${process.env.SONG_CHANNEL}`);
-			}
-
-			if (requests.length > 0 && requests[0]?.url != null) {
-				await RequestService.markDone(requests[0].id);
-				const userId = requests[0].user.id;
-				const url = requests[0].url;
-				const user = client.users.cache.get(userId);
-				const username = user?.username ?? '';
-				const embed = await EmbedComponents.buildVideo(username, url);
-				const textChannel = client.channels.cache.get(requests[0].channelRequested);
-
-				// If requested in text channel (?never)
-				if (textChannel instanceof TextChannel) {
-					textChannel?.send({ content: 'Now playing:', embeds: [embed] });
-				}
-
-				this.playUrl(channel, requests[0].url);
-			}
+			// If no requests, just pause
+			player.pause();
 		});
 
 		player.on(AudioPlayerStatus.Playing, (oldState, newState) => {
@@ -107,6 +84,50 @@ export class Voice {
 		});
 
 		return player;
+	}
+
+	static async playNextRequest(channel: VoiceChannel) {
+		const voiceConnection = await this.getVoiceConnection(channel);
+
+		if (voiceConnection === undefined) {
+			// TODO:
+			// FIXME:
+			throw new Error('playNextRequest error, voiceConnection undefined');
+		}
+
+		// CHECK FOR LIST
+		const requests = await RequestService.getRequestList(voiceConnection.guildId);
+
+		// If in radio mode, add more
+		if (RadioManager.currentMode() == RadioModes.RADIO && requests.length < 10) {
+			RadioManager.addSongs(10, voiceConnection.guildId, RadioManager.currentTextChannel());
+		}
+
+		if (requests.length > 0 && requests[0]?.url != null) {
+			await RequestService.markDone(requests[0].id);
+			const userId = requests[0].user?.id ?? null;
+			const url = requests[0].url;
+			const user = client.users.cache.get(userId);
+			// TODO: Fix
+			let username;
+			if (user === null) {
+				username = 'Radio';
+			} else {
+				username = user?.username ?? '---';
+			}
+			const embed = await EmbedComponents.buildVideo(username, url);
+			const guild = await client.guilds.fetch(voiceConnection.guildId);
+			const textChannel = await guild.channels.fetch(requests[0].channelRequested);
+
+			// If requested in text channel (?never)
+			if (textChannel !== null && textChannel.isText()) {
+				textChannel?.send({ content: 'Now playing:', embeds: [embed] });
+			}
+
+			return this.playUrl(channel, requests[0].url);
+		} else {
+			return false;
+		}
 	}
 
 	static async playUrl(voiceChannel: VoiceChannel, url: string) {

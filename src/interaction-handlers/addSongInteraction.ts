@@ -17,18 +17,22 @@ export class addSongInteraction extends InteractionHandler {
 		super(ctx, { interactionHandlerType: InteractionHandlerTypes.SelectMenu });
 	}
 	public async run(interaction: SelectMenuInteraction, parsedData: parsedGenreData) {
+		// Check if message is not in DM channel
+		if (!interaction.guildId) return false;
+
 		// Convert id string to id of Genres to add to DB
 		const genres = await GenreService.getGenreArray(parsedData.genres);
 
 		const song = new Song();
 		song.url = parsedData.url;
+		song.guildId = interaction.guildId;
 		song.userId = parsedData.discordId;
 		song.genres = genres;
 		song.description = parsedData.title;
 
 		await SongService.create(song);
 
-		await interaction.update({
+		return await interaction.update({
 			content: `Adicionado!!!`,
 			components: []
 		});

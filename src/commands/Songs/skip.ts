@@ -2,15 +2,11 @@ import { ApplyOptions } from '@sapphire/decorators';
 import { Command, CommandOptions } from '@sapphire/framework';
 import { send } from '@sapphire/plugin-editable-commands';
 import { Message, VoiceChannel } from 'discord.js';
-import { SelectMenuComponents } from '../..//components/SelectMenu.components';
 import { errorCodes, errorMessage } from '../../errors/errorMessages';
+import { Voice } from '../../lib/Voice';
 
 @ApplyOptions<CommandOptions>({
-	aliases: [
-		'radio',
-		'random'
-	],
-	description: 'A command that gets songs from the DB.',
+	description: ';skip - Skips songs.',
 	generateDashLessAliases: true
 })
 export class UserCommand extends Command {
@@ -24,12 +20,12 @@ export class UserCommand extends Command {
 
 		// If user is in voiceChannel
 		if (Boolean(voiceChannel) && voiceChannel instanceof VoiceChannel) {
-			const genreList = await SelectMenuComponents.genreListMenu('startRadioInteraction');
-
-			return send(message, {
-				content: 'A começar jukebox, escolhe os estilos ...',
-				components: [genreList]
+			await send(message, {
+				content: 'A skippar...'
 			});
+			await Voice.stop(voiceChannel);
+			await Voice.playNextRequest(voiceChannel);
+			return true;
 		}
 		// If it's not the correct type
 		return send(message, errorMessage[errorCodes.NOT_IN_VOICE]);

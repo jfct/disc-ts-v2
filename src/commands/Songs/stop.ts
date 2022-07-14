@@ -8,7 +8,7 @@ import { errorCodes, errorMessage } from '../../errors/errorMessages';
 import { Voice } from '../../lib/Voice';
 
 @ApplyOptions<CommandOptions>({
-	description: 'A command that pauses songs.',
+	description: ';stop - STOPS songs.',
 	generateDashLessAliases: true
 })
 export class UserCommand extends Command {
@@ -23,7 +23,7 @@ export class UserCommand extends Command {
 		// If user is in voiceChannel
 		if (Boolean(voiceChannel) && voiceChannel instanceof VoiceChannel) {
 			await Voice.stop(voiceChannel);
-			await RequestService.markAllDone();
+			await RequestService.markAllDone(message.guild.id);
 			RadioManager.stop();
 
 			return reply(message, { content: 'Bot parado, queue limpa!' });

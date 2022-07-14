@@ -6,7 +6,7 @@ import { errorCodes, errorMessage } from '../../errors/errorMessages';
 import { Voice } from '../../lib/Voice';
 
 @ApplyOptions<CommandOptions>({
-	description: 'A command that pauses songs.',
+	description: ';pause - Pauses songs.',
 	generateDashLessAliases: true
 })
 export class UserCommand extends Command {

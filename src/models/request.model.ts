@@ -11,6 +11,9 @@ export class Request extends GenericEntity {
 	channelRequested: string;
 
 	@Column()
+	guildRequested: string;
+
+	@Column()
 	url: string;
 
 	@Column()

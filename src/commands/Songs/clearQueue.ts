@@ -10,8 +10,7 @@ import { errorCodes, errorMessage } from '../../errors/errorMessages';
 		'clean',
 		'clear'
 	],
-	description: 'A command that clears the requests.',
-	generateDashLessAliases: true
+	description: ';clear - Clears the queue.'
 })
 export class UserCommand extends Command {
 	public async messageRun(message: Message) {
@@ -24,7 +23,7 @@ export class UserCommand extends Command {
 
 		// If user is in voiceChannel
 		if (Boolean(voiceChannel) && voiceChannel instanceof VoiceChannel) {
-			await RequestService.markAllDone();
+			await RequestService.markAllDone(message.guild.id);
 			return reply(message, { content: 'Queue limpa!' });
 		}
 		// If it's not the correct type

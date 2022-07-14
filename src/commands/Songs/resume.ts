@@ -10,7 +10,7 @@ import { Voice } from '../../lib/Voice';
 		'unpause',
 		'continue'
 	],
-	description: 'A command that pauses songs.',
+	description: ';resume / ;continue - Resume song.',
 	generateDashLessAliases: true
 })
 export class UserCommand extends Command {

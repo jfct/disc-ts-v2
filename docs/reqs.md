@@ -18,3 +18,9 @@ For the db name, just use the name, not the extension .db
 >npm run start (buildup the tables)
 >run migrations (typeorm-and-migrations.md)
 >npm run start 
+
+
+
+## Good to know
+
+When no guildId, it might come from a DM channel

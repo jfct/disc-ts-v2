@@ -11,11 +11,11 @@ export class Song extends GenericEntity {
 	@Column()
 	description: string;
 
+	@Column()
+	guildId: string;
+
 	@Column({ type: 'uuid' })
 	userId: string;
-
-	// @Column({ type: 'uuid' })
-	// genreId: string;
 
 	@ManyToMany(() => Genre, { cascade: true, onDelete: 'CASCADE' })
 	@JoinTable()

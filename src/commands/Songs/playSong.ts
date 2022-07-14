@@ -12,7 +12,7 @@ import { Request } from '../../models/request.model';
 import { User } from '../../models/user.model';
 
 @ApplyOptions<CommandOptions>({
-	description: 'plays song / adds to queue',
+	description: ';play <url> / ;p <url> - Plays a song / adds to queue, if bot playing (;p shortcut)',
 	aliases: [
 		'p',
 		'play',
@@ -28,7 +28,6 @@ export class UserCommand extends Command {
 
 		const voiceChannel = message.member?.voice.channel;
 
-		this.container.logger.debug(voiceChannel instanceof VoiceChannel);
 		// If user is in voiceChannel
 		if (Boolean(voiceChannel) && voiceChannel instanceof VoiceChannel) {
 			try {
@@ -51,6 +50,7 @@ export class UserCommand extends Command {
 						const req: Request = new Request();
 						req.url = link;
 						req.user = user;
+						req.guildRequested = `${message.guildId}`;
 						req.channelRequested = message.channelId;
 						req.title = `${embed.title}`;
 

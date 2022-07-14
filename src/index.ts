@@ -58,15 +58,15 @@ export const RadioManager = new Radio();
 
 // ################### Process events
 
-process.on('exit', () => {
-	console.log('\nGracefully shutting down client');
+process.on('exit', async () => {
+	console.log('\nGracefully shutting down client...');
 	client.destroy();
 });
 
 process.on('SIGINT', function () {
 	console.log('\nGracefully shutting down from SIGINT (Ctrl-C)');
 	// some other closing procedures go here
-	process.exit(0);
+	process.exit(1);
 });
 
 // ###################

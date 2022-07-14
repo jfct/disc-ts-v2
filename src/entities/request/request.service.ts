@@ -11,12 +11,13 @@ export class RequestService {
 		return AppDataSource.createQueryBuilder().insert().into(Request).values(data).execute();
 	}
 
-	static async getRequestList(): Promise<Request[]> {
+	static async getRequestList(guildId: string): Promise<Request[]> {
 		const requestRepo = AppDataSource.getRepository(Request);
 
 		return await requestRepo.find({
 			where: {
-				done: false
+				done: false,
+				guildRequested: guildId
 			},
 			order: {
 				created_at: 'ASC'
@@ -55,13 +56,16 @@ export class RequestService {
 			.execute();
 	}
 
-	static async markAllDone() {
+	static async markAllDone(guildId: string) {
 		const requestRepo = AppDataSource.getRepository(Request);
 
 		return await requestRepo
 			.createQueryBuilder()
 			.update({
 				done: true
+			})
+			.where({
+				guildRequested: guildId
 			})
 			.execute();
 	}

@@ -1,25 +1,31 @@
 import { PaginatedMessage } from '@sapphire/discord.js-utilities';
 import { MessageEmbed } from 'discord.js';
 import ytdl from 'ytdl-core';
+import { client } from '..';
 import { RequestService } from '../entities/request/request.service';
+import { SongService } from '../entities/song/song.service';
+import { Genre } from '../models/genre.model';
 
 export class EmbedComponents {
 	// Returns embed with request info
 	static async buildVideo(author: string, url: string): Promise<MessageEmbed> {
 		const info = await ytdl.getInfo(url);
+		const details = info?.videoDetails?.description ?? ' ';
+		const description = details.substring(0, 150);
 
 		return new MessageEmbed()
 			.setColor('#0099ff')
 			.setTitle(info.videoDetails.title)
 			.setURL(url)
-			.setDescription(`${info.videoDetails.title} \n\n ${info.videoDetails.description}`)
+			.setDescription(`${info.videoDetails.title} \n\n ${description}`)
 			.setThumbnail(info.videoDetails.thumbnails[0].url)
-			.addField('Pedido por: ', author)
+			.addField('Pedido por: ', `${author}`)
 			.setTimestamp();
 	}
 
-	static async queue(): Promise<PaginatedMessage> {
-		const list = await RequestService.getRequestList();
+	// Returns a paginatedmessage embed with the request list
+	static async queue(guildId: string): Promise<PaginatedMessage> {
+		const list = await RequestService.getRequestList(guildId);
 		let idx = 0;
 		let page = 1;
 
@@ -36,16 +42,108 @@ export class EmbedComponents {
 						list
 							.slice(idx, idx + 5)
 							.map((req) => {
-								return `${idx + 1}. ${req.title}`;
+								idx++;
+								return `${idx}. ${req.title}`;
 							})
 							.join('\n')
 					)
 					.setTitle(`Page ${page}`)
 			);
-			idx += 5;
 			page++;
 		}
 
+		// Remove custom entry by sapphire
+		paginatedMessage.actions.delete('@sapphire/paginated-messages.goToPage');
+
 		return paginatedMessage;
+	}
+
+	// Returns a paginatedmessage embed with a song list
+	static async songList(guildId: string, genres?: Genre[]): Promise<PaginatedMessage> {
+		const list = await SongService.getList(guildId, genres);
+		let idx = 0;
+		let page = 1;
+
+		const paginatedMessage = new PaginatedMessage({
+			template: new MessageEmbed()
+				// Be sure to add a space so this is offset from the page numbers!
+				.setFooter({ text: ' song list' })
+		});
+
+		// If no songs found
+		if (list.length <= 0) {
+			paginatedMessage.addPageBuilder((builder) =>
+				builder //
+					.setContent('Lista vazia manuh')
+					.setEmbeds([new MessageEmbed().setTimestamp()])
+			);
+		}
+		while (idx < list.length) {
+			paginatedMessage.addPageEmbed((embed) =>
+				embed //
+					.setDescription(
+						list
+							.slice(idx, idx + 20)
+							.map((song) => {
+								return `${song.id}. [${song.genres.map((genre) => genre.description).join('\\')}] ${song.description}`;
+							})
+							.join('\n')
+					)
+					.setTitle(`Page ${page}`)
+			);
+			idx += 20;
+			page++;
+		}
+
+		// Remove custom entry by sapphire
+		paginatedMessage.actions.delete('@sapphire/paginated-messages.goToPage');
+
+		return paginatedMessage;
+	}
+
+	static async listCommands(): Promise<MessageEmbed> {
+		const commandList = client.stores.get('commands');
+		const commands = {};
+
+		commandList.forEach((command, name) => {
+			const key = command.fullCategory[0];
+
+			if (commands.hasOwnProperty(key)) {
+				commands[key].push({
+					name: name,
+					text: `\n**${name}**: ${command.description}`
+				});
+			} else {
+				commands[key] = [
+					{
+						name: name,
+						text: `\n**${name}**\n ${command.description}`
+					}
+				];
+			}
+		});
+
+		const embed = new MessageEmbed() //
+			.setColor('#0099ff')
+			.setTitle('Comandos')
+			.setAuthor({
+				name: 'Super Mantij',
+				iconURL: 'https://i.imgur.com/DFXOPFd.png'
+			})
+			.setTimestamp();
+
+		for (const category in commands) {
+			let content = '';
+			// Sort commands inside a category
+			const sortedCommands = commands[category].sort((a, b) => (a.name > b.name ? 1 : -1));
+
+			sortedCommands.forEach((item) => {
+				content += item.text;
+			});
+
+			embed.addField(`**${category}**`, `\n${content}`, false);
+		}
+
+		return embed;
 	}
 }

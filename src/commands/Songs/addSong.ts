@@ -15,7 +15,7 @@ import { matchYoutubeUrl } from '../../lib/utils';
 		'adddatabase',
 		'save'
 	],
-	description: 'A command that adds songs to the database.',
+	description: ';save <url> / ;addsong <url> - Adds a song to the database.',
 	generateDashLessAliases: true
 })
 export class UserCommand extends Command {

@@ -1,9 +1,8 @@
 import { AppDataSource } from '../..';
 import { Genre } from '../../models/genre.model';
-import { GenreCreationDto } from './genre.dto';
 
 export class GenreService {
-	static async create(data: GenreCreationDto) {
+	static async create(data: Genre) {
 		return await AppDataSource.manager
 			.createQueryBuilder()
 			.insert()
