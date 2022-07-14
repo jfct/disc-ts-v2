@@ -1,6 +1,7 @@
 import { send } from '@sapphire/plugin-editable-commands';
 import { Message, MessageEmbed } from 'discord.js';
 import { RandomLoadingMessage } from './constants';
+import ytdl = require('ytdl-core');
 
 /**
  * Picks a random item from an array

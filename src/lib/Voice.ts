@@ -7,10 +7,13 @@ import {
 	joinVoiceChannel,
 	VoiceConnectionStatus
 } from '@discordjs/voice';
-import { VoiceChannel } from 'discord.js';
+import { TextChannel, VoiceChannel } from 'discord.js';
 import ytdl from 'ytdl-core';
-import { voiceConnections } from '..';
+import { client, RadioManager, voiceConnections } from '..';
+import { EmbedComponents } from '../components/Embeds.components';
+import { RequestService } from '../entities/request/request.service';
 import { VoiceManager, VoiceManagerGroup } from '../types/voice.types';
+import { RadioModes } from './Radio';
 
 export class Voice {
 	static async getVoiceConnection(channel: VoiceChannel): Promise<VoiceManagerGroup | undefined> {
@@ -60,10 +63,7 @@ export class Voice {
 			throw new Error();
 		}
 
-		console.log('\nAQUI =>>>>>>', voiceConnection.voice);
-
 		if (voiceConnection?.voice?.player) {
-			console.log('returna o mesmo voice player');
 			return voiceConnection.voice.player;
 		}
 
@@ -71,89 +71,105 @@ export class Voice {
 
 		voiceConnection.voice.player = player;
 
-		player.on(AudioPlayerStatus.Playing, (oldState, newState) => {
-			console.log('oldState => ', oldState);
-			console.log('newState => ', newState);
+		player.on(AudioPlayerStatus.Idle, async (oldState, newState) => {
+			// console.log('oldState iDLE => ', oldState);
+			// console.log('newState => ', newState);
+
+			// CHECK FOR LIST
+			const requests = await RequestService.getRequestList();
+
+			// If in radio mode, add more
+			if (RadioManager.currentMode() == RadioModes.RADIO && requests.length < 10) {
+				RadioManager.addSongs(10, `${process.env.SONG_CHANNEL}`);
+			}
+
+			if (requests.length > 0 && requests[0]?.url != null) {
+				await RequestService.markDone(requests[0].id);
+				const userId = requests[0].user.id;
+				const url = requests[0].url;
+				const user = client.users.cache.get(userId);
+				const username = user?.username ?? '';
+				const embed = await EmbedComponents.buildVideo(username, url);
+				const textChannel = client.channels.cache.get(requests[0].channelRequested);
+
+				// If requested in text channel (?never)
+				if (textChannel instanceof TextChannel) {
+					textChannel?.send({ content: 'Now playing:', embeds: [embed] });
+				}
+
+				this.playUrl(channel, requests[0].url);
+			}
 		});
 
-		player.on(AudioPlayerStatus.Idle, (oldState, newState) => {
-			console.log('oldState iDLE => ', oldState);
-			console.log('newState => ', newState);
-
-			Voice.playFunk(channel);
+		player.on(AudioPlayerStatus.Playing, (oldState, newState) => {
+			// console.log('oldState => ', oldState);
+			// console.log('newState => ', newState);
 		});
 
 		return player;
 	}
 
-	static async playFunk(channel: VoiceChannel) {
-		const arr = [
-			'https://www.youtube.com/watch?v=Qpx9k9icfn0',
-			'https://www.youtube.com/watch?v=COyoezo3Xw4',
-			'https://www.youtube.com/watch?v=0okmuq4P83o'
-		];
-
-		const mus = arr[Math.floor(Math.random() * (arr.length - 1 + 1) + 1) - 1];
-
-		await Voice.playUrl(channel, mus);
-	}
-
 	static async playUrl(voiceChannel: VoiceChannel, url: string) {
-		console.log('url => ', url);
+		console.log('Playing url => ', url);
 
 		const newVoice = await Voice.createConnection(voiceChannel);
 		const player = await Voice.createPlayer(voiceChannel);
-		const info = await ytdl.getInfo(url);
-
-		const title = info.videoDetails.title;
-		const musicLength = info.videoDetails.lengthSeconds;
-		const channelName = info.videoDetails.ownerChannelName;
-
-		console.log(info);
 
 		const stream = ytdl(url, { filter: 'audioonly' });
 		const resource = createAudioResource(stream);
 
-		// console.log('RES => ', resource);
-
-		// if (!(player.state.status === AudioPlayerStatus.Playing)) {
-		// 	player.play(resource);
-		// 	newVoice.connection.subscribe(player);
-		// }
-
-		// if (newVoice.player?.state === AudioPlayerPlayingState) {
-		// 	console.log('Playing...');
-		// }
-		// newVoice.player?.state === player.play(resource);
+		// If not paused/playing can add
+		if ([
+				AudioPlayerStatus.Playing,
+				AudioPlayerStatus.Paused
+			].indexOf(player.state.status) == -1) {
+			player.play(resource);
+			newVoice.connection.subscribe(player);
+		}
 	}
 
-	// static playSound(audioName, type) {
-	// 	const appDir = path.dirname(__filename);
-	// 	const audioPath = appDir + '\\resources\\' + type + '\\' + audioName;
-	// 	const resource = createAudioResource(audioPath);
-	// 	global.player.play(resource);
-	// }
+	// Returns false if no player
+	static async pause(channel: VoiceChannel) {
+		const voiceConnection = await Voice.getVoiceConnection(channel);
 
-	// static playRandomSound(folder) {
-	// 	const appDir = path.dirname(__filename);
-	// 	const audioPath = appDir + '\\resources\\' + folder;
-	// 	const file = Voice.getRandomSound(folder);
-	// 	const resource = createAudioResource(audioPath + '\\' + file);
-	// 	global.player.play(resource);
-	// }
+		if (voiceConnection?.voice?.player) {
+			return voiceConnection?.voice.player?.pause();
+		} else {
+			return false;
+		}
+	}
 
+	// Returns false if no player
 	static async stop(channel: VoiceChannel) {
 		const voiceConnection = await Voice.getVoiceConnection(channel);
 
 		if (voiceConnection?.voice?.player) {
-			return true;
-		} else {
 			return voiceConnection?.voice.player?.stop();
+		} else {
+			return false;
 		}
 	}
 
-	static getState() {
-		return global.player.AudioPlayerState;
+	// Returns false if no player
+	static async resume(channel: VoiceChannel) {
+		const voiceConnection = await Voice.getVoiceConnection(channel);
+
+		if (voiceConnection?.voice?.player) {
+			return voiceConnection?.voice.player?.unpause();
+		} else {
+			return false;
+		}
+	}
+
+	// Returns false if no player active
+	static async getState(channel: VoiceChannel): Promise<AudioPlayerStatus | boolean> {
+		const voiceConnection = await Voice.getVoiceConnection(channel);
+
+		if (voiceConnection?.voice.player) {
+			return voiceConnection.voice.player.state.status;
+		} else {
+			return false;
+		}
 	}
 
 	// static getRandomSound(folder) {

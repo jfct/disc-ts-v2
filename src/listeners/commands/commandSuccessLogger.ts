@@ -27,7 +27,7 @@ export class UserEvent extends Listener<typeof Events.MessageCommandSuccess> {
 			console.log(`Creating user.... ${message.author.username}`);
 
 			await UserService.create({
-				discordId: message.author.id
+				id: message.author.id
 			});
 		}
 

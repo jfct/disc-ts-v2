@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinTable, ManyToMany, ManyToOne } from 'typeorm';
 import { GenericEntity } from './base.model';
 import { Genre } from './genre.model';
 import { User } from './user.model';
@@ -14,11 +14,12 @@ export class Song extends GenericEntity {
 	@Column({ type: 'uuid' })
 	userId: string;
 
-	@Column({ type: 'uuid' })
-	genreId: string;
+	// @Column({ type: 'uuid' })
+	// genreId: string;
 
-	@ManyToOne(() => Genre, (genre) => genre.songs)
-	genre: Genre | undefined;
+	@ManyToMany(() => Genre, { cascade: true, onDelete: 'CASCADE' })
+	@JoinTable()
+	genres: Genre[];
 
 	@ManyToOne(() => User, (user) => user.songs)
 	user: number | undefined;

@@ -1,6 +1,5 @@
-import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { GenericEntity } from './base.model';
-import { Song } from './song.model';
 import { User } from './user.model';
 
 @Entity()
@@ -8,11 +7,16 @@ export class Request extends GenericEntity {
 	@Column('boolean', { default: false })
 	done: boolean;
 
-	@OneToOne(() => User)
+	@Column()
+	channelRequested: string;
+
+	@Column()
+	url: string;
+
+	@Column()
+	title: string;
+
+	@ManyToOne(() => User)
 	@JoinColumn()
 	user: User;
-
-	@OneToOne(() => Song)
-	@JoinColumn()
-	song: Song;
 }

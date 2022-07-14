@@ -1,9 +1,10 @@
 import { LogLevel, SapphireClient } from '@sapphire/framework';
 import '@sapphire/plugin-editable-commands/register';
 import '@sapphire/plugin-logger/register';
-import path from 'path';
+import * as path from 'path';
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
+import { Radio } from './lib/Radio';
 import './lib/setup';
 import { Command } from './models/command.model';
 import { Genre } from './models/genre.model';
@@ -12,7 +13,9 @@ import { Song } from './models/song.model';
 import { User } from './models/user.model';
 import { VoiceManagerGroup } from './types/voice.types';
 
-const client = new SapphireClient({
+// ################### State managers
+
+export const client = new SapphireClient({
 	defaultPrefix: ';',
 	regexPrefix: /^(hey +)?bot[,! ]/i,
 	caseInsensitiveCommands: true,
@@ -35,7 +38,6 @@ const client = new SapphireClient({
 });
 
 export const voiceConnections: VoiceManagerGroup[] = [];
-
 export const AppDataSource = new DataSource({
 	type: 'sqlite',
 	database: path.join(process.cwd(), 'discord.db'),
@@ -50,6 +52,12 @@ export const AppDataSource = new DataSource({
 	logging: 'all'
 });
 
+export const RadioManager = new Radio();
+
+// ###################
+
+// ################### Process events
+
 process.on('exit', () => {
 	console.log('\nGracefully shutting down client');
 	client.destroy();
@@ -60,6 +68,8 @@ process.on('SIGINT', function () {
 	// some other closing procedures go here
 	process.exit(0);
 });
+
+// ###################
 
 const main = async () => {
 	try {
@@ -75,7 +85,7 @@ const main = async () => {
 				//await db.close();
 			})
 			.catch((err) => {
-				console.log('error! => ', err);
+				console.log('DB Init error! => ', err);
 			});
 	} catch (error) {
 		client.logger.fatal(error);

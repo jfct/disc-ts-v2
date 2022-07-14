@@ -1,3 +1,3 @@
 export type UserCreationDto = {
-	discordId: string;
+	id: string;
 };

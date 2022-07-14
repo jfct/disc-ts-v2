@@ -12,12 +12,12 @@ export class UserService {
 			.execute();
 	}
 
-	static async findOne(discordId: string) {
+	static async findOne(id: string) {
 		const userRepo = AppDataSource.getRepository(User);
 
 		return await userRepo.findOne({
 			where: {
-				discordId
+				id
 			},
 			cache: true,
 			relations: { songs: false, requests: false, commands: false }
