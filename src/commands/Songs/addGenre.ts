@@ -21,7 +21,7 @@ export class addGenre extends Command {
 							.setDescription('Nome para o novo genre')
 							.addStringOption((option) => option.setName('genre').setDescription('Insere o nome do novo genero'))
 					),
-			{ guildIds: [`${process.env.TEST_GUILD}`], behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
+			{ behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
 		);
 	}
 

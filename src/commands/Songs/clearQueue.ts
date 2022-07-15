@@ -1,5 +1,5 @@
 import { ApplyOptions } from '@sapphire/decorators';
-import { ChatInputCommand, Command, CommandOptions } from '@sapphire/framework';
+import { ChatInputCommand, Command, CommandOptions, RegisterBehavior } from '@sapphire/framework';
 import { VoiceChannel } from 'discord.js';
 import { RequestService } from '../../entities/request/request.service';
 import { errorCodes, errorMessage } from '../../errors/errorMessages';
@@ -10,7 +10,7 @@ import { errorCodes, errorMessage } from '../../errors/errorMessages';
 export class clearQueue extends Command {
 	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
 		registry.registerChatInputCommand((builder) => builder.setName(this.name).setDescription(this.description), {
-			guildIds: [`${process.env.TEST_GUILD}`]
+			behaviorWhenNotIdentical: RegisterBehavior.Overwrite
 		});
 	}
 

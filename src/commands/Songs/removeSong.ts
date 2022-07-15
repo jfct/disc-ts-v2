@@ -18,7 +18,7 @@ export class removeSong extends Command {
 							.setDescription('Song Id para apagar')
 							.addStringOption((option) => option.setName('id').setDescription('Song id para remover'))
 					),
-			{ guildIds: [`${process.env.TEST_GUILD}`], behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
+			{ behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
 		);
 	}
 

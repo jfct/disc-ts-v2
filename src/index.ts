@@ -1,9 +1,12 @@
+import { AudioPlayer } from '@discordjs/voice';
 import { LogLevel, SapphireClient } from '@sapphire/framework';
 import '@sapphire/plugin-editable-commands/register';
 import '@sapphire/plugin-logger/register';
+import 'ffmpeg';
 import * as path from 'path';
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
+import { RequestService } from './entities/request/request.service';
 import { Radio } from './lib/Radio';
 import './lib/setup';
 import { Command } from './models/command.model';
@@ -11,7 +14,6 @@ import { Genre } from './models/genre.model';
 import { Request } from './models/request.model';
 import { Song } from './models/song.model';
 import { User } from './models/user.model';
-import { VoiceManagerGroup } from './types/voice.types';
 
 // ################### State managers
 
@@ -37,7 +39,13 @@ export const client = new SapphireClient({
 	]
 });
 
-export const voiceConnections: VoiceManagerGroup[] = [];
+//DEBUGS;
+// client.on('debug', console.log);
+// client.on('error', console.error);
+// client.on('warn', console.warn);
+
+//export const voiceConnections: VoiceManagerGroup[] = [];
+export const audioPlayers: AudioPlayer[] = [];
 export const AppDataSource = new DataSource({
 	type: 'sqlite',
 	database: path.join(process.cwd(), 'discord.db'),
@@ -79,7 +87,7 @@ const main = async () => {
 		client.logger.info('logged in');
 
 		// Initialize DB connection
-		AppDataSource.initialize()
+		await AppDataSource.initialize()
 			.then(() => {
 				//const db: Database = Database.build();
 				//await db.close();
@@ -87,8 +95,12 @@ const main = async () => {
 			.catch((err) => {
 				console.log('DB Init error! => ', err);
 			});
+
+		console.log('Clear old requests');
+		await RequestService.cleanAllRequests();
+		console.log('Cleared!');
 	} catch (error) {
-		client.logger.fatal(error);
+		console.log(error);
 		client.destroy();
 		process.exit(1);
 	}

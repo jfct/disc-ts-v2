@@ -19,7 +19,16 @@ For the db name, just use the name, not the extension .db
 >run migrations (typeorm-and-migrations.md)
 >npm run start 
 
+## Youtube stream
 
+Using (play-dl)[https://www.npmjs.com/package/play-dl] to stream audio for the bot
+
+## Application commands
+
+If we want guild specific only commands
+```typescript
+{ guildIds: [`${process.env.TEST_GUILD}`], behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
+```
 
 ## Good to know
 

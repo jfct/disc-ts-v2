@@ -26,7 +26,7 @@ export class playSong extends Command {
 							.setDescription('Play/Adicionar a lista')
 							.addStringOption((option) => option.setName('url').setDescription('URL'))
 					),
-			{ guildIds: [`${process.env.TEST_GUILD}`], behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
+			{ behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
 		);
 	}
 

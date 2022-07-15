@@ -1,6 +1,6 @@
 import { PaginatedMessage } from '@sapphire/discord.js-utilities';
 import { MessageEmbed } from 'discord.js';
-import ytdl from 'ytdl-core';
+import playdl from 'play-dl';
 import { client } from '..';
 import { RequestService } from '../entities/request/request.service';
 import { SongService } from '../entities/song/song.service';
@@ -9,16 +9,16 @@ import { Genre } from '../models/genre.model';
 export class EmbedComponents {
 	// Returns embed with request info
 	static async buildVideo(author: string, url: string): Promise<MessageEmbed> {
-		const info = await ytdl.getInfo(url);
-		const details = info?.videoDetails?.description ?? ' ';
+		const info = await playdl.video_info(url);
+		const details = info.video_details.description ?? ' ';
 		const description = details.substring(0, 150);
 
 		return new MessageEmbed()
 			.setColor('#0099ff')
-			.setTitle(info.videoDetails.title)
+			.setTitle(`${info.video_details.title}`)
 			.setURL(url)
-			.setDescription(`${info.videoDetails.title} \n\n ${description}`)
-			.setThumbnail(info.videoDetails.thumbnails[0].url)
+			.setDescription(`${info.video_details.title} \n\n ${description}`)
+			.setThumbnail(info.video_details.thumbnails[0].url)
 			.addField('Pedido por: ', `${author}`)
 			.setTimestamp();
 	}
@@ -93,12 +93,13 @@ export class EmbedComponents {
 						list
 							.slice(idx, idx + 20)
 							.map((song) => {
-								return `${song.id}. [${song.genres.map((genre) => genre.description).join(' | ')}] ${song.description}`;
+								return `ID[${song.id}] ${song.description}\n\`\`${song.genres.map((genre) => genre.description).join('``  ``')}\`\``;
 							})
 							.join('\n')
 					)
 					.setTitle(`Page ${page}`)
 			);
+
 			idx += 20;
 			page++;
 		}

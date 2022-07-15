@@ -4,52 +4,53 @@ import {
 	createAudioPlayer,
 	createAudioResource,
 	entersState,
+	getVoiceConnection,
 	joinVoiceChannel,
+	NoSubscriberBehavior,
+	VoiceConnection,
 	VoiceConnectionStatus
 } from '@discordjs/voice';
 import { VoiceChannel } from 'discord.js';
-import ytdl from 'ytdl-core';
-import { client, RadioManager, voiceConnections } from '..';
+import play from 'play-dl';
+import { audioPlayers, client, RadioManager } from '..';
 import { EmbedComponents } from '../components/Embeds.components';
 import { RequestService } from '../entities/request/request.service';
-import { VoiceManager, VoiceManagerGroup } from '../types/voice.types';
 import { RadioModes } from './Radio';
+import path = require('path');
 
 export class Voice {
-	static async getVoiceConnection(channel: VoiceChannel): Promise<VoiceManagerGroup | undefined> {
-		return voiceConnections.find((element) => element.guildId === channel.guildId);
+	static async getVC(guildId: string): Promise<VoiceConnection | undefined> {
+		return getVoiceConnection(guildId);
 	}
 
-	static async createConnection(channel: VoiceChannel): Promise<VoiceManager> {
-		const voiceConnection = await Voice.getVoiceConnection(channel);
+	static async createCon(channel: VoiceChannel): Promise<VoiceConnection> {
+		const voiceConnection = await Voice.getVC(channel.guildId);
 
 		// If there's a connection open on the same server return the same connection
-		if (voiceConnection?.voice) {
-			return voiceConnection.voice;
+		if (voiceConnection) {
+			return voiceConnection;
 		}
 
 		const connection = joinVoiceChannel({
 			channelId: channel.id,
 			guildId: channel.guild.id,
-			adapterCreator: channel.guild.voiceAdapterCreator
+			selfMute: false,
+			selfDeaf: false,
+			adapterCreator: channel.guild.voiceAdapterCreator,
+			debug: true
 		});
+
 		try {
-			await entersState(connection, VoiceConnectionStatus.Ready, 30_000);
+			await entersState(connection, VoiceConnectionStatus.Ready, 30_00);
 
-			// Create a new group
-			const voiceManagerGroup: VoiceManagerGroup = {
-				guildId: channel.guildId,
-				voice: {
-					connection,
-					channel
-				}
-			};
+			connection.once('error', console.error);
 
-			// Save on global
-			voiceConnections.push(voiceManagerGroup);
+			connection.on('stateChange', (a, b) => {
+				console.log('Voice Connection, new State => ', b.status);
+			});
 
 			// Return the voiceManager
-			return voiceManagerGroup.voice;
+			return connection;
 		} catch (error) {
 			connection.destroy();
 			throw error;
@@ -57,37 +58,39 @@ export class Voice {
 	}
 
 	static async createPlayer(channel: VoiceChannel): Promise<AudioPlayer> {
-		const voiceConnection = await Voice.getVoiceConnection(channel);
-
-		if (voiceConnection === undefined) {
-			throw new Error();
+		if (audioPlayers[channel.guildId]) {
+			return audioPlayers[channel.guildId];
 		}
 
-		if (voiceConnection?.voice?.player) {
-			return voiceConnection.voice.player;
-		}
+		const player = createAudioPlayer({
+			behaviors: {
+				noSubscriber: NoSubscriberBehavior.Play
+			}
+		});
 
-		const player = createAudioPlayer();
-
-		voiceConnection.voice.player = player;
+		player.on('stateChange', (a, b) => {
+			console.log('Player, new state => ', b.status);
+		});
 
 		player.on(AudioPlayerStatus.Idle, async () => {
-			this.playNextRequest(channel);
-
-			// If no requests, just pause
-			player.pause();
+			if (!this.playNextRequest(channel)) {
+				// If no requests, just pause
+				player.pause();
+			}
 		});
 
-		player.on(AudioPlayerStatus.Playing, (oldState, newState) => {
-			// console.log('oldState => ', oldState);
-			// console.log('newState => ', newState);
-		});
+		// player.on(AudioPlayerStatus.Playing, (oldState, newState) => {
+		// 	// console.log('oldState => ', oldState);
+		// 	// console.log('newState => ', newState);
+		// });
+
+		audioPlayers[channel.guildId] = player;
 
 		return player;
 	}
 
 	static async playNextRequest(channel: VoiceChannel) {
-		const voiceConnection = await this.getVoiceConnection(channel);
+		const voiceConnection = await this.getVC(channel.guildId);
 
 		if (voiceConnection === undefined) {
 			// TODO:
@@ -96,11 +99,11 @@ export class Voice {
 		}
 
 		// CHECK FOR LIST
-		const requests = await RequestService.getRequestList(voiceConnection.guildId);
+		const requests = await RequestService.getRequestList(channel.guildId);
 
 		// If in radio mode, add more
 		if (RadioManager.currentMode() == RadioModes.RADIO && requests.length < 10) {
-			RadioManager.addSongs(10, voiceConnection.guildId, RadioManager.currentTextChannel());
+			RadioManager.addSongs(10, channel.guildId, RadioManager.currentTextChannel());
 		}
 
 		if (requests.length > 0 && requests[0]?.url != null) {
@@ -116,7 +119,7 @@ export class Voice {
 				username = user?.username ?? '---';
 			}
 			const embed = await EmbedComponents.buildVideo(username, url);
-			const guild = await client.guilds.fetch(voiceConnection.guildId);
+			const guild = await client.guilds.fetch(channel.guildId);
 			const textChannel = await guild.channels.fetch(requests[0].channelRequested);
 
 			// If requested in text channel (?never)
@@ -131,13 +134,19 @@ export class Voice {
 	}
 
 	static async playUrl(voiceChannel: VoiceChannel, url: string) {
-		console.log('Playing url => ', url);
+		let connection = await this.getVC(voiceChannel.guildId);
 
-		const newVoice = await Voice.createConnection(voiceChannel);
+		if (connection === undefined) {
+			connection = await Voice.createCon(voiceChannel);
+		}
+
 		const player = await Voice.createPlayer(voiceChannel);
 
-		const stream = ytdl(url, { filter: 'audioonly' });
-		const resource = createAudioResource(stream);
+		console.log('Playing url => ', url);
+		const dload = await play.stream(url);
+		const resource = createAudioResource(dload.stream, {
+			inputType: dload.type
+		});
 
 		// If not paused/playing can add
 		if ([
@@ -145,16 +154,17 @@ export class Voice {
 				AudioPlayerStatus.Paused
 			].indexOf(player.state.status) == -1) {
 			player.play(resource);
-			newVoice.connection.subscribe(player);
+			connection.subscribe(player);
 		}
+		return true;
 	}
 
 	// Returns false if no player
 	static async pause(channel: VoiceChannel) {
-		const voiceConnection = await Voice.getVoiceConnection(channel);
+		const player: AudioPlayer = audioPlayers[channel.guildId];
 
-		if (voiceConnection?.voice?.player) {
-			return voiceConnection?.voice.player?.pause();
+		if (player) {
+			return player.pause();
 		} else {
 			return false;
 		}
@@ -162,10 +172,10 @@ export class Voice {
 
 	// Returns false if no player
 	static async stop(channel: VoiceChannel) {
-		const voiceConnection = await Voice.getVoiceConnection(channel);
+		const player: AudioPlayer = audioPlayers[channel.guildId];
 
-		if (voiceConnection?.voice?.player) {
-			return voiceConnection?.voice.player?.stop();
+		if (player) {
+			return player.stop();
 		} else {
 			return false;
 		}
@@ -173,10 +183,10 @@ export class Voice {
 
 	// Returns false if no player
 	static async resume(channel: VoiceChannel) {
-		const voiceConnection = await Voice.getVoiceConnection(channel);
+		const player: AudioPlayer = audioPlayers[channel.guildId];
 
-		if (voiceConnection?.voice?.player) {
-			return voiceConnection?.voice.player?.unpause();
+		if (player) {
+			return player.unpause();
 		} else {
 			return false;
 		}
@@ -184,24 +194,12 @@ export class Voice {
 
 	// Returns false if no player active
 	static async getState(channel: VoiceChannel): Promise<AudioPlayerStatus | boolean> {
-		const voiceConnection = await Voice.getVoiceConnection(channel);
+		const player: AudioPlayer = audioPlayers[channel.guildId];
 
-		if (voiceConnection?.voice.player) {
-			return voiceConnection.voice.player.state.status;
+		if (player) {
+			return player.state.status;
 		} else {
 			return false;
 		}
 	}
-
-	// static getRandomSound(folder) {
-	// 	const appDir = path.dirname(__filename);
-	// 	const audioPath = appDir + '\\resources\\' + folder;
-	// 	const list: any[] = [];
-
-	// 	fs.readdirSync(audioPath).forEach((file) => {
-	// 		list.push(file);
-	// 	});
-
-	// 	return pickRandom(list);
-	// }
 }

@@ -1,5 +1,5 @@
 import { ApplyOptions } from '@sapphire/decorators';
-import { ChatInputCommand, Command, CommandOptions } from '@sapphire/framework';
+import { ChatInputCommand, Command, CommandOptions, RegisterBehavior } from '@sapphire/framework';
 import { VoiceChannel } from 'discord.js';
 import { errorCodes, errorMessage } from '../../errors/errorMessages';
 import { Voice } from '../../lib/Voice';
@@ -10,7 +10,7 @@ import { Voice } from '../../lib/Voice';
 export class skip extends Command {
 	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
 		registry.registerChatInputCommand((builder) => builder.setName(this.name).setDescription(this.description), {
-			guildIds: [`${process.env.TEST_GUILD}`]
+			behaviorWhenNotIdentical: RegisterBehavior.Overwrite
 		});
 	}
 
@@ -31,7 +31,7 @@ export class skip extends Command {
 				content: 'A skippar...'
 			});
 			await Voice.stop(voiceChannel);
-			await Voice.playNextRequest(voiceChannel);
+			//await Voice.playNextRequest(voiceChannel);
 			return true;
 		}
 		// If it's not the correct type

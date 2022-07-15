@@ -1,6 +1,7 @@
 import { InteractionHandler, InteractionHandlerTypes, PieceContext } from '@sapphire/framework';
 import { SelectMenuInteraction, VoiceChannel } from 'discord.js';
 import { RadioManager } from '..';
+import { GenreService } from '../entities/genre/genre.service';
 import { errorCodes, errorMessage } from '../errors/errorMessages';
 import { RadioModes } from '../lib/Radio';
 
@@ -32,8 +33,11 @@ export class startRadioInteraction extends InteractionHandler {
 
 		if (channel !== undefined) {
 			if (await RadioManager.start(channel as VoiceChannel, interaction.channelId)) {
-				return interaction.update({
-					content: `Iniciado modo rádio!! :poop:`,
+				await interaction.deferReply({ ephemeral: false });
+				const genres = await GenreService.getGenreNames(RadioManager.currentGenres());
+				return interaction.followUp({
+					ephemeral: false,
+					content: `Iniciado modo rádio!! :poop:\n Generos: \`\`${genres.map((genre) => genre?.description).join('``  ``')}\`\``,
 					components: []
 				});
 			} else {

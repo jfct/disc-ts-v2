@@ -24,7 +24,7 @@ export class addSong extends Command {
 							.setDescription('Adicionar musica BD')
 							.addStringOption((option) => option.setName('url').setDescription('URL'))
 					),
-			{ guildIds: [`${process.env.TEST_GUILD}`], behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
+			{ behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
 		);
 	}
 
@@ -36,7 +36,7 @@ export class addSong extends Command {
 
 		const subcommand = interaction.options.getSubcommand(true);
 
-		if (subcommand === 'addsong') {
+		if (subcommand === 'url') {
 			return await this.registerSong(interaction);
 		}
 		return interaction.reply({ ephemeral: true, content: 'Sub comando inválido!' });

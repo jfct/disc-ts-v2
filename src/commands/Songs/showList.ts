@@ -1,5 +1,5 @@
 import { ApplyOptions } from '@sapphire/decorators';
-import { ChatInputCommand, Command, CommandOptions } from '@sapphire/framework';
+import { ChatInputCommand, Command, CommandOptions, RegisterBehavior } from '@sapphire/framework';
 import { EmbedComponents } from '../../components/Embeds.components';
 
 @ApplyOptions<CommandOptions>({
@@ -8,7 +8,7 @@ import { EmbedComponents } from '../../components/Embeds.components';
 export class showList extends Command {
 	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
 		registry.registerChatInputCommand((builder) => builder.setName(this.name).setDescription(this.description), {
-			guildIds: [`${process.env.TEST_GUILD}`]
+			behaviorWhenNotIdentical: RegisterBehavior.Overwrite
 		});
 	}
 
@@ -18,6 +18,7 @@ export class showList extends Command {
 		// Checking if the message was sent in a DM channel.
 		if (!interaction.guild) return false;
 
+		await interaction.deferReply({ ephemeral: true });
 		const paginatedMessage = await EmbedComponents.songList(interaction.guild.id);
 		return paginatedMessage.run(interaction, interaction.user);
 	}

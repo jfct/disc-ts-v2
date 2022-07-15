@@ -69,4 +69,15 @@ export class RequestService {
 			})
 			.execute();
 	}
+
+	static async cleanAllRequests() {
+		const requestRepo = AppDataSource.getRepository(Request);
+
+		return await requestRepo
+			.createQueryBuilder()
+			.update({
+				done: true
+			})
+			.execute();
+	}
 }
