@@ -1,36 +1,49 @@
 import { ApplyOptions } from '@sapphire/decorators';
-import { Args, Command, CommandOptions } from '@sapphire/framework';
-import { send } from '@sapphire/plugin-editable-commands';
-import { Message } from 'discord.js';
+import { ChatInputCommand, Command, CommandOptions, RegisterBehavior } from '@sapphire/framework';
 import { SongService } from '../../entities/song/song.service';
 
 @ApplyOptions<CommandOptions>({
-	aliases: [
-		'r',
-		'remove',
-		'delete',
-		'apagar',
-		'trash'
-	],
-	description: ';remove / ;r - Removes songs to the database.',
-	generateDashLessAliases: true
+	description: 'Removes songs to the database.'
 })
-export class UserCommand extends Command {
-	public async messageRun(message: Message, args: Args) {
-		// Checking if the message author is a bot.
-		if (message.author.bot) return false;
-		// Checking if the message was sent in a DM channel.
-		if (!message.guild) return false;
+export class removeSong extends Command {
+	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
+		registry.registerChatInputCommand(
+			(builder) =>
+				builder
+					.setName(this.name)
+					.setDescription(this.description)
+					.addSubcommand((command) =>
+						command
+							.setName('id')
+							.setDescription('Song Id para apagar')
+							.addStringOption((option) => option.setName('id').setDescription('Song id para remover'))
+					),
+			{ guildIds: [`${process.env.TEST_GUILD}`], behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
+		);
+	}
 
-		const id = await args.pick('number');
-		if (id != null) {
-			const song = await SongService.find(id);
-			if (song != undefined) {
-				const res = await SongService.remove(song);
-				return send(message, { content: `Removido - ${res.description}` });
-			}
-			return send(message, { content: 'Id não encontrado' });
+	public async chatInputRun(interaction: Command.ChatInputInteraction) {
+		// Checking if the message author is a bot.
+		if (interaction.user.bot) return false;
+		// Checking if the message was sent in a DM channel.
+		if (!interaction.guild) return false;
+
+		const subcommand = interaction.options.getSubcommand(true);
+
+		if (subcommand === 'id') {
+			return await this.removeSong(interaction);
 		}
-		return send(message, { content: 'Id inválido manuh' });
+		return interaction.reply({ ephemeral: true, content: 'Sub comando inválido!' });
+	}
+
+	private async removeSong(interaction: Command.ChatInputInteraction) {
+		const id = interaction.options.getString('id', true);
+
+		const song = await SongService.find(parseInt(id));
+		if (song != undefined) {
+			const res = await SongService.remove(song);
+			return interaction.reply({ ephemeral: true, content: `Removido - ${res.description}` });
+		}
+		return interaction.reply({ ephemeral: true, content: 'Id não encontrado' });
 	}
 }

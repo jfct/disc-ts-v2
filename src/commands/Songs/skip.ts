@@ -1,26 +1,33 @@
 import { ApplyOptions } from '@sapphire/decorators';
-import { Command, CommandOptions } from '@sapphire/framework';
-import { send } from '@sapphire/plugin-editable-commands';
-import { Message, VoiceChannel } from 'discord.js';
+import { ChatInputCommand, Command, CommandOptions } from '@sapphire/framework';
+import { VoiceChannel } from 'discord.js';
 import { errorCodes, errorMessage } from '../../errors/errorMessages';
 import { Voice } from '../../lib/Voice';
 
 @ApplyOptions<CommandOptions>({
-	description: ';skip - Skips songs.',
-	generateDashLessAliases: true
+	description: 'Skips songs.'
 })
-export class UserCommand extends Command {
-	public async messageRun(message: Message) {
-		// Checking if the message author is a bot.
-		if (message.author.bot) return false;
-		// Checking if the message was sent in a DM channel.
-		if (!message.guild) return false;
+export class skip extends Command {
+	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
+		registry.registerChatInputCommand((builder) => builder.setName(this.name).setDescription(this.description), {
+			guildIds: [`${process.env.TEST_GUILD}`]
+		});
+	}
 
-		const voiceChannel = message.member?.voice.channel;
+	public async chatInputRun(interaction: Command.ChatInputInteraction) {
+		// Checking if the message author is a bot.
+		if (interaction.user.bot) return false;
+		// Checking if the message was sent in a DM channel.
+		if (!interaction.guild) return false;
+
+		const guild = await interaction.guild?.fetch();
+		const member = await guild?.members.fetch(interaction.user.id);
+		const voiceChannel = member?.voice.channel;
 
 		// If user is in voiceChannel
 		if (Boolean(voiceChannel) && voiceChannel instanceof VoiceChannel) {
-			await send(message, {
+			await interaction.reply({
+				ephemeral: true,
 				content: 'A skippar...'
 			});
 			await Voice.stop(voiceChannel);
@@ -28,6 +35,6 @@ export class UserCommand extends Command {
 			return true;
 		}
 		// If it's not the correct type
-		return send(message, errorMessage[errorCodes.NOT_IN_VOICE]);
+		return interaction.reply({ ephemeral: true, content: errorMessage[errorCodes.NOT_IN_VOICE] });
 	}
 }

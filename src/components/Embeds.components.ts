@@ -35,6 +35,14 @@ export class EmbedComponents {
 				.setFooter({ text: ' bot queue' })
 		});
 
+		// If no songs found
+		if (list.length <= 0) {
+			paginatedMessage.addPageBuilder((builder) =>
+				builder //
+					.setContent('Lista vazia manuh')
+					.setEmbeds([new MessageEmbed().setTimestamp()])
+			);
+		}
 		while (idx < list.length) {
 			paginatedMessage.addPageEmbed((embed) =>
 				embed //
@@ -85,7 +93,7 @@ export class EmbedComponents {
 						list
 							.slice(idx, idx + 20)
 							.map((song) => {
-								return `${song.id}. [${song.genres.map((genre) => genre.description).join('\\')}] ${song.description}`;
+								return `${song.id}. [${song.genres.map((genre) => genre.description).join(' | ')}] ${song.description}`;
 							})
 							.join('\n')
 					)

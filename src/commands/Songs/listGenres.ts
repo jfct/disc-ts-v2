@@ -1,11 +1,12 @@
 import { ApplyOptions } from '@sapphire/decorators';
 import { ChatInputCommand, Command, CommandOptions } from '@sapphire/framework';
-import { EmbedComponents } from '../../components/Embeds.components';
+import { MessageEmbed } from 'discord.js';
+import { GenreService } from '../../entities/genre/genre.service';
 
 @ApplyOptions<CommandOptions>({
-	description: 'Shows the current queue.'
+	description: 'Lists all the genres in the DB.'
 })
-export class queue extends Command {
+export class listGenres extends Command {
 	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
 		registry.registerChatInputCommand((builder) => builder.setName(this.name).setDescription(this.description), {
 			guildIds: [`${process.env.TEST_GUILD}`]
@@ -18,7 +19,19 @@ export class queue extends Command {
 		// Checking if the message was sent in a DM channel.
 		if (!interaction.guild) return false;
 
-		const paginatedMessage = await EmbedComponents.queue(interaction.guild.id);
-		return paginatedMessage.run(interaction, interaction.user);
+		const genreList = await GenreService.findAll();
+		const embed = new MessageEmbed()
+			.setColor('#0099ff')
+			.setTitle('Generos de musica:')
+			.setDescription(
+				genreList
+					.map((genre, index) => {
+						return `${index + 1}. **${genre.description}** (id: ${genre.id})\n\n`;
+					})
+					.join('\n')
+			)
+			.setTimestamp();
+
+		return interaction.reply({ ephemeral: true, embeds: [embed] });
 	}
 }

@@ -11,12 +11,14 @@ import { RadioModes } from '../../lib/Radio';
 		'jukebox',
 		'random'
 	],
-	description: ';jukebox / ;radio - Gets songs from the DB and keeps playing them on loop.',
+	description: 'Gets songs from the DB and keeps playing them on loop.',
 	generateDashLessAliases: true
 })
 export class Radio extends Command {
 	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
-		registry.registerChatInputCommand((builder) => builder.setName(this.name).setDescription(this.description));
+		registry.registerChatInputCommand((builder) => builder.setName(this.name).setDescription(this.description), {
+			guildIds: [`${process.env.TEST_GUILD}`]
+		});
 	}
 
 	public async chatInputRun(interaction: Command.ChatInputInteraction) {

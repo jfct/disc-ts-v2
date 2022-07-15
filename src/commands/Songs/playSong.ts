@@ -1,8 +1,7 @@
 import { AudioPlayerStatus } from '@discordjs/voice';
 import { ApplyOptions } from '@sapphire/decorators';
-import { Args, Command, CommandOptions } from '@sapphire/framework';
-import { reply, send } from '@sapphire/plugin-editable-commands';
-import { Message, VoiceChannel } from 'discord.js';
+import { ChatInputCommand, Command, CommandOptions, RegisterBehavior } from '@sapphire/framework';
+import { VoiceChannel } from 'discord.js';
 import { EmbedComponents } from '../../components/Embeds.components';
 import { RequestService } from '../../entities/request/request.service';
 import { errorCodes, errorMessage } from '../../errors/errorMessages';
@@ -12,70 +11,81 @@ import { Request } from '../../models/request.model';
 import { User } from '../../models/user.model';
 
 @ApplyOptions<CommandOptions>({
-	description: ';play <url> / ;p <url> - Plays a song / adds to queue, if bot playing (;p shortcut)',
-	aliases: [
-		'p',
-		'play',
-		'playmusic'
-	]
+	description: 'Plays a song / adds to queue, if bot playing (;p shortcut)'
 })
-export class UserCommand extends Command {
-	public async messageRun(message: Message, args: Args) {
-		// Checking if the message author is a bot.
-		if (message.author.bot) return false;
-		// Checking if the message was sent in a DM channel.
-		if (!message.guild) return false;
+export class playSong extends Command {
+	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
+		registry.registerChatInputCommand(
+			(builder) =>
+				builder
+					.setName(this.name)
+					.setDescription(this.description)
+					.addSubcommand((command) =>
+						command
+							.setName('url')
+							.setDescription('Play/Adicionar a lista')
+							.addStringOption((option) => option.setName('url').setDescription('URL'))
+					),
+			{ guildIds: [`${process.env.TEST_GUILD}`], behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
+		);
+	}
 
-		const voiceChannel = message.member?.voice.channel;
+	public async chatInputRun(interaction: Command.ChatInputInteraction) {
+		// Checking if the message author is a bot.
+		if (interaction.user.bot) return false;
+		// Checking if the message was sent in a DM channel.
+		if (!interaction.guild) return false;
+
+		const guild = await interaction.guild?.fetch();
+		const member = await guild?.members.fetch(interaction.user.id);
+		const voiceChannel = member?.voice.channel;
 
 		// If user is in voiceChannel
 		if (Boolean(voiceChannel) && voiceChannel instanceof VoiceChannel) {
-			try {
-				// Gets first hyperlink in message
-				const hyperlink = await args.pick('hyperlink');
+			const subcommand = interaction.options.getSubcommand(true);
 
-				// Check if any hyperlinks grabbed or if it's a youtube link
-				if (Boolean(hyperlink) && matchYoutubeUrl(hyperlink.toString())) {
-					const link = hyperlink.toString();
-					// Delete message with command
-					await message.delete();
-					const embed = await EmbedComponents.buildVideo(message.author.username, link.toString());
-					const state = await Voice.getState(voiceChannel);
-
-					// Check if the song doesn't exist in the playlist yet
-					if (state === AudioPlayerStatus.Playing) {
-						const user: User = new User();
-						user.id = message.author.id;
-
-						const req: Request = new Request();
-						req.url = link;
-						req.user = user;
-						req.guildRequested = `${message.guildId}`;
-						req.channelRequested = message.channelId;
-						req.title = `${embed.title}`;
-
-						await RequestService.create(req);
-						return send(message, { content: 'Adicionado manuh', embeds: [embed] });
-					}
-
-					// Adds the music to play
-					await Voice.playUrl(voiceChannel, link);
-
-					return send(message, {
-						content: 'A adicionar musica',
-						embeds: [embed]
-					});
-				}
-				return this.returnBadURL(message);
-			} catch (err) {
-				this.container.logger.warn('Bad URL on command');
-				return this.returnBadURL(message);
+			if (subcommand === 'url') {
+				return await this.playSong(interaction, voiceChannel);
 			}
+			return interaction.reply({ ephemeral: true, content: 'Sub comando inválido!' });
 		}
 		// If it's not the correct type
-		return send(message, errorMessage[errorCodes.NOT_IN_VOICE]);
+		return interaction.reply({ ephemeral: true, content: errorMessage[errorCodes.NOT_IN_VOICE] });
 	}
-	private returnBadURL(message: Message<boolean>) {
-		return reply(message, { content: errorMessage[errorCodes.BAD_URL] });
+
+	private async playSong(interaction: Command.ChatInputInteraction, voiceChannel: VoiceChannel) {
+		const link = interaction.options.getString('url', true);
+
+		// Check if any hyperlinks grabbed or if it's a youtube link
+		if (Boolean(link) && matchYoutubeUrl(link)) {
+			const embed = await EmbedComponents.buildVideo(interaction.user.username, link);
+			const state = await Voice.getState(voiceChannel);
+
+			// Check if the song doesn't exist in the playlist yet
+			if (state === AudioPlayerStatus.Playing) {
+				const user: User = new User();
+				user.id = interaction.user.id;
+
+				const req: Request = new Request();
+				req.url = link;
+				req.user = user;
+				req.guildRequested = `${interaction.guildId}`;
+				req.channelRequested = interaction.channelId;
+				req.title = `${embed.title}`;
+
+				await RequestService.create(req);
+				return interaction.reply({ ephemeral: true, content: 'Adicionado manuh', embeds: [embed] });
+			}
+
+			// Adds the music to play
+			await Voice.playUrl(voiceChannel, link);
+
+			return interaction.reply({ ephemeral: true, content: 'A adicionar musica', embeds: [embed] });
+		}
+		return this.returnBadURL(interaction);
+	}
+
+	private returnBadURL(interaction: Command.ChatInputInteraction) {
+		return interaction.reply({ ephemeral: true, content: errorMessage[errorCodes.BAD_URL] });
 	}
 }

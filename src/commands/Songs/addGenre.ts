@@ -1,31 +1,49 @@
 import { ApplyOptions } from '@sapphire/decorators';
-import { Args, Command, CommandOptions } from '@sapphire/framework';
-import { reply } from '@sapphire/plugin-editable-commands';
-import { Message } from 'discord.js';
+import { ChatInputCommand, Command, CommandOptions, RegisterBehavior } from '@sapphire/framework';
 import { GenreService } from '../../entities/genre/genre.service';
 import { Genre } from '../../models/genre.model';
 
 @ApplyOptions<CommandOptions>({
-	aliases: [
-		'newGenre',
-		'addcategory'
-	],
-	description: ';addgenre <nome_genero> - Adds a genre in the DB.',
+	description: 'Adds a genre in the DB.',
 	generateDashLessAliases: true
 })
-export class UserCommand extends Command {
-	public async messageRun(message: Message, args: Args) {
+export class addGenre extends Command {
+	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
+		console.log('registered', [`${process.env.TEST_GUILD}`]);
+		registry.registerChatInputCommand(
+			(builder) =>
+				builder
+					.setName(this.name)
+					.setDescription(this.description)
+					.addSubcommand((command) =>
+						command
+							.setName('genre')
+							.setDescription('Nome para o novo genre')
+							.addStringOption((option) => option.setName('genre').setDescription('Insere o nome do novo genero'))
+					),
+			{ guildIds: [`${process.env.TEST_GUILD}`], behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
+		);
+	}
+
+	public async chatInputRun(interaction: Command.ChatInputInteraction) {
 		// Checking if the message author is a bot.
-		if (message.author.bot) return false;
+		if (interaction.user.bot) return false;
 		// Checking if the message was sent in a DM channel.
-		if (!message.guild) return false;
+		if (!interaction.guild) return false;
 
+		const subcommand = interaction.options.getSubcommand(true);
+
+		if (subcommand === 'genre') {
+			return await this.registerGenre(interaction);
+		}
+		return interaction.reply({ ephemeral: true, content: 'Sub comando inválido!' });
+	}
+
+	private async registerGenre(interaction: Command.ChatInputInteraction) {
 		const genre = new Genre();
-		const name = await args.pick('string');
-		genre.description = name;
-
+		genre.description = interaction.options.getString('genre', true);
 		await GenreService.create(genre);
 
-		return reply(message, { content: `Genre ${name} adicionado! :poop:` });
+		return interaction.reply({ content: 'Novo genre registado!', ephemeral: true });
 	}
 }
