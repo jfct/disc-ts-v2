@@ -36,7 +36,6 @@ export class startRadioInteraction extends InteractionHandler {
 				await interaction.deferReply({ ephemeral: false });
 				const genres = await GenreService.getGenreNames(RadioManager.currentGenres());
 				return interaction.followUp({
-					ephemeral: false,
 					content: `Iniciado modo rádio!! :poop:\n Generos: \`\`${genres.map((genre) => genre?.description).join('``  ``')}\`\``,
 					components: []
 				});

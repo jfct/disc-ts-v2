@@ -24,8 +24,7 @@ export class RequestService {
 			},
 			relations: {
 				user: true
-			},
-			take: 10
+			}
 		});
 	}
 

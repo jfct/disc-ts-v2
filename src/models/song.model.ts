@@ -17,6 +17,9 @@ export class Song extends GenericEntity {
 	@Column({ type: 'uuid' })
 	userId: string;
 
+	@Column({ default: 0 })
+	playCount: number;
+
 	@ManyToMany(() => Genre, { cascade: true, onDelete: 'CASCADE' })
 	@JoinTable()
 	genres: Genre[];

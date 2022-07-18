@@ -9,7 +9,6 @@ import { Genre } from '../../models/genre.model';
 })
 export class addGenre extends Command {
 	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
-		console.log('registered', [`${process.env.TEST_GUILD}`]);
 		registry.registerChatInputCommand(
 			(builder) =>
 				builder

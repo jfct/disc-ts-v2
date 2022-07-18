@@ -102,8 +102,8 @@ export class Voice {
 		const requests = await RequestService.getRequestList(channel.guildId);
 
 		// If in radio mode, add more
-		if (RadioManager.currentMode() == RadioModes.RADIO && requests.length < 10) {
-			RadioManager.addSongs(10, channel.guildId, RadioManager.currentTextChannel());
+		if (RadioManager.currentMode() == RadioModes.RADIO && requests.length < 2) {
+			RadioManager.addSongs(3, channel.guildId, RadioManager.currentTextChannel());
 		}
 
 		if (requests.length > 0 && requests[0]?.url != null) {

@@ -12,7 +12,6 @@ import { matchYoutubeUrl } from '../../lib/utils';
 })
 export class addSong extends Command {
 	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
-		console.log('registered', [`${process.env.TEST_GUILD}`]);
 		registry.registerChatInputCommand(
 			(builder) =>
 				builder
@@ -46,11 +45,11 @@ export class addSong extends Command {
 		const hyperlink = interaction.options.getString('url', true);
 
 		// Check if any hyperlinks grabbed or if it's a youtube link
-		if (matchYoutubeUrl(hyperlink)) {
+		if (Boolean(hyperlink) && matchYoutubeUrl(hyperlink)) {
 			const link = hyperlink.toString();
 
 			// Check if the song doesn't exist in the playlist yet
-			if (await SongService.checkSongExists(link)) {
+			if (await SongService.checkSongExists(`${interaction.guildId}`, link)) {
 				return interaction.reply({ ephemeral: true, content: 'Já está adicionada manuh' });
 			}
 

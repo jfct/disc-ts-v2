@@ -11,6 +11,16 @@ export class GenreService {
 			.execute();
 	}
 
+	static async findOne(id: number) {
+		const genreRepo = AppDataSource.getRepository(Genre);
+
+		return await genreRepo.findOne({
+			where: {
+				id
+			}
+		});
+	}
+
 	static async findAll() {
 		const genreRepo = AppDataSource.getRepository(Genre);
 
@@ -31,5 +41,13 @@ export class GenreService {
 		const list = await this.findAll();
 
 		return genreIds.map((genre) => list.find((item) => item.id.toString() == genre));
+	}
+
+	static async remove(genreId: number) {
+		const genreRepo = AppDataSource.getRepository(Genre);
+
+		return await genreRepo.delete({
+			id: genreId
+		});
 	}
 }

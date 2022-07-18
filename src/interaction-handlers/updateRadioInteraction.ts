@@ -1,6 +1,7 @@
 import { InteractionHandler, InteractionHandlerTypes, PieceContext } from '@sapphire/framework';
 import { SelectMenuInteraction, VoiceChannel } from 'discord.js';
 import { RadioManager } from '..';
+import { GenreService } from '../entities/genre/genre.service';
 import { RequestService } from '../entities/request/request.service';
 import { errorCodes, errorMessage } from '../errors/errorMessages';
 
@@ -32,10 +33,13 @@ export class updateRadioInteraction extends InteractionHandler {
 		const member = await interaction.guild?.members.search({ query: interaction.user.username });
 		const channel = member?.get(interaction.user.id)?.voice.channel;
 
+		// Get news genres
+		const genreNames = await GenreService.getGenreNames(interaction.values);
+
 		if (channel !== undefined) {
 			if (await RadioManager.start(channel as VoiceChannel, interaction.channelId)) {
 				return interaction.update({
-					content: `Generos alterados!! :poop:`,
+					content: `Generos alterados!! :poop: \n\`\`${genreNames.join('`` ``')}\`\``,
 					components: []
 				});
 			} else {

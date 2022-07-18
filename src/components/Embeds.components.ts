@@ -5,8 +5,22 @@ import { client } from '..';
 import { RequestService } from '../entities/request/request.service';
 import { SongService } from '../entities/song/song.service';
 import { Genre } from '../models/genre.model';
+import { Song } from '../models/song.model';
 
 export class EmbedComponents {
+	static async songEditEmbed(song: Song) {
+		const info = await playdl.video_info(song.url);
+		const thumbnail = info.video_details.thumbnails[0].url;
+
+		return new MessageEmbed()
+			.setColor('#0099ff')
+			.setTitle(`${song.description}`)
+			.setURL(song.url)
+			.setDescription(`Editing.... ${song.description}`)
+			.setThumbnail(thumbnail)
+			.setTimestamp();
+	}
+
 	// Returns embed with request info
 	static async buildVideo(author: string, url: string): Promise<MessageEmbed> {
 		const info = await playdl.video_info(url);
@@ -58,6 +72,7 @@ export class EmbedComponents {
 					.setTitle(`Page ${page}`)
 			);
 			page++;
+			idx += 5;
 		}
 
 		// Remove custom entry by sapphire
@@ -91,7 +106,7 @@ export class EmbedComponents {
 				embed //
 					.setDescription(
 						list
-							.slice(idx, idx + 20)
+							.slice(idx, idx + 15)
 							.map((song) => {
 								return `ID[${song.id}] ${song.description}\n\`\`${song.genres.map((genre) => genre.description).join('``  ``')}\`\``;
 							})
@@ -100,7 +115,7 @@ export class EmbedComponents {
 					.setTitle(`Page ${page}`)
 			);
 
-			idx += 20;
+			idx += 15;
 			page++;
 		}
 

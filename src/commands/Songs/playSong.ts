@@ -80,7 +80,7 @@ export class playSong extends Command {
 			// Adds the music to play
 			await Voice.playUrl(voiceChannel, link);
 
-			return interaction.reply({ ephemeral: true, content: 'A adicionar musica', embeds: [embed] });
+			return interaction.reply({ content: 'A adicionar musica', embeds: [embed] });
 		}
 		return this.returnBadURL(interaction);
 	}
