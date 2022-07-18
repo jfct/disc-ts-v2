@@ -1,4 +1,6 @@
-import { VoiceChannel } from 'discord.js';
+import { TextChannel, VoiceChannel } from 'discord.js';
+import { client } from '..';
+import { EmbedComponents } from '../components/Embeds.components';
 import { RequestService } from '../entities/request/request.service';
 import { SongService } from '../entities/song/song.service';
 import { Request } from '../models/request.model';
@@ -44,13 +46,17 @@ export class Radio {
 	async start(voiceChannel: VoiceChannel, textChannelId: string): Promise<boolean> {
 		if (this.currentState !== RadioModes.RADIO) return false;
 
-		this.textChannel = textChannelId;
-
+		// Get requests
 		const list = await RequestService.getRequestList(voiceChannel.guildId);
 		if (list.length <= 0) {
 			return false;
 		}
 		await Voice.playUrl(voiceChannel, list[0].url);
+
+		// Send message to textChannel
+		const textChannel = (await client.channels.cache.get(textChannelId)) as TextChannel;
+		const embed = await EmbedComponents.buildVideo('Radio', list[0].url);
+		textChannel.send({ content: 'Now playing...', embeds: [embed] });
 
 		return true;
 	}
@@ -64,6 +70,9 @@ export class Radio {
 
 	async addSongs(nr: number, guildId: string, channelId: string) {
 		const songs = await SongService.getRandom(nr, this.radioGenres);
+
+		// Add playcount to each song
+		await SongService.addPlayCountBulk(songs.map((value) => value.id.toString()));
 
 		// Adds the 10 random songs
 		return await RequestService.createBulk(
