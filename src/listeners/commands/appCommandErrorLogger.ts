@@ -1,35 +1,22 @@
-import { ChatInputCommandSuccessPayload, Command, Events, Listener, ListenerOptions, LogLevel, PieceContext } from '@sapphire/framework';
+import { ChatInputCommandDeniedPayload, Command, Events, Listener, ListenerOptions, LogLevel, PieceContext } from '@sapphire/framework';
 import type { Logger } from '@sapphire/plugin-logger';
 import { cyan } from 'colorette';
 import type { Guild, User } from 'discord.js';
-import { UserService } from '../../entities/user/user.service';
 import { TextLogger } from '../../lib/TextLogger';
 
-export class AppCommandListener extends Listener<typeof Events.ChatInputCommandSuccess> {
+export class AppCommandListener extends Listener<typeof Events.ChatInputCommandError> {
 	public constructor(context: PieceContext, options?: ListenerOptions) {
 		super(context, {
 			...options,
-			event: Events.ChatInputCommandSuccess
+			event: Events.ChatInputCommandError
 		});
 	}
 
-	public async run({ interaction, command }: ChatInputCommandSuccessPayload) {
+	public async run({ interaction, command }: ChatInputCommandDeniedPayload) {
 		const shard = this.shard(interaction.guild?.shardId ?? 0);
 		const commandName = this.command(command);
 		const author = this.author(interaction.user);
 		const sentAt = interaction.guild ? this.guild(interaction.guild) : this.direct();
-
-		// Check if author is signed in db
-		const user = await UserService.findOne(interaction.user.id);
-
-		// If user doesn't exist yet, create
-		if (!Boolean(user)) {
-			console.log(`Creating user.... ${interaction.user.username}`);
-
-			await UserService.create({
-				id: interaction.user.id
-			});
-		}
 
 		this.container.logger.debug(`${shard} - ${commandName} ${author} ${sentAt}`);
 

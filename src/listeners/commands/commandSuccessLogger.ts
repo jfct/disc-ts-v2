@@ -4,6 +4,7 @@ import type { Logger } from '@sapphire/plugin-logger';
 import { cyan } from 'colorette';
 import type { Guild, User } from 'discord.js';
 import { UserService } from '../../entities/user/user.service';
+import { TextLogger } from '../../lib/TextLogger';
 
 export class UserEvent extends Listener<typeof Events.MessageCommandSuccess> {
 	public constructor(context: PieceContext, options?: ListenerOptions) {
@@ -32,6 +33,9 @@ export class UserEvent extends Listener<typeof Events.MessageCommandSuccess> {
 		}
 
 		this.container.logger.debug(`${shard} - ${commandName} ${author} ${sentAt}`);
+
+		// Log command
+		TextLogger.writeRegular(command.name, message.author.username);
 	}
 
 	public onLoad() {
