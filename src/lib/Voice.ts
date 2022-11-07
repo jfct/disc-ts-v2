@@ -12,7 +12,7 @@ import {
 } from '@discordjs/voice';
 import { VoiceChannel } from 'discord.js';
 import play from 'play-dl';
-import { audioPlayers, client, RadioManager } from '..';
+import { audioPlayers, client, nrRandomSongsToAdd, RadioManager } from '..';
 import { EmbedComponents } from '../components/Embeds.components';
 import { RequestService } from '../entities/request/request.service';
 import { RadioModes } from './Radio';
@@ -42,14 +42,7 @@ export class Voice {
 
 		try {
 			await entersState(connection, VoiceConnectionStatus.Ready, 30_00);
-
 			connection.once('error', console.error);
-
-			connection.on('stateChange', (a, b) => {
-				console.log('Voice Connection, new State => ', b.status);
-			});
-
-			// Return the voiceManager
 			return connection;
 		} catch (error) {
 			connection.destroy();
@@ -68,13 +61,10 @@ export class Voice {
 			}
 		});
 
-		player.on('stateChange', (a, b) => {
-			console.log('Player, new state => ', b.status);
-		});
-
 		player.on(AudioPlayerStatus.Idle, async () => {
 			if (!this.playNextRequest(channel)) {
 				// If no requests, just pause
+				// TODO: Remove?
 				player.pause();
 			}
 		});
@@ -103,7 +93,7 @@ export class Voice {
 
 		// If in radio mode, add more
 		if (RadioManager.currentMode() == RadioModes.RADIO && requests.length < 2) {
-			RadioManager.addSongs(3, channel.guildId, RadioManager.currentTextChannel());
+			RadioManager.addSongs(nrRandomSongsToAdd, channel.guildId, RadioManager.currentTextChannel());
 		}
 
 		if (requests.length > 0 && requests[0]?.url != null) {

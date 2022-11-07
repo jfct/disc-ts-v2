@@ -1,6 +1,6 @@
 import { InteractionHandler, InteractionHandlerTypes, PieceContext } from '@sapphire/framework';
 import { SelectMenuInteraction, VoiceChannel } from 'discord.js';
-import { RadioManager } from '..';
+import { nrRandomSongsToAdd, RadioManager } from '..';
 import { GenreService } from '../entities/genre/genre.service';
 import { RequestService } from '../entities/request/request.service';
 import { errorCodes, errorMessage } from '../errors/errorMessages';
@@ -27,7 +27,7 @@ export class updateRadioInteraction extends InteractionHandler {
 		if (interaction.guildId === null) {
 			return interaction.update({ content: errorMessage[errorCodes.WHAT_THE_HELL] });
 		}
-		await RadioManager.addSongs(10, interaction.guildId, interaction.channelId);
+		await RadioManager.addSongs(nrRandomSongsToAdd, interaction.guildId, interaction.channelId);
 
 		// Get the voice channel where the user is in
 		const member = await interaction.guild?.members.search({ query: interaction.user.username });

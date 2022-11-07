@@ -24,14 +24,11 @@ export class EmbedComponents {
 	// Returns embed with request info
 	static async buildVideo(author: string, url: string): Promise<MessageEmbed> {
 		const info = await playdl.video_info(url);
-		const details = info.video_details.description ?? ' ';
-		const description = details.substring(0, 150);
 
 		return new MessageEmbed()
 			.setColor('#0099ff')
 			.setTitle(`${info.video_details.title}`)
 			.setURL(url)
-			.setDescription(`${info.video_details.title} \n\n ${description}`)
 			.setThumbnail(info.video_details.thumbnails[0].url)
 			.addField('Pedido por: ', `${author}`)
 			.setTimestamp();
@@ -151,8 +148,8 @@ export class EmbedComponents {
 			.setColor('#0099ff')
 			.setTitle('Comandos')
 			.setAuthor({
-				name: 'Super Mantij',
-				iconURL: 'https://i.imgur.com/DFXOPFd.png'
+				name: 'Super Mantij'
+				//iconURL: 'https://i.imgur.com/DFXOPFd.png'
 			})
 			.setTimestamp();
 

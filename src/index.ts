@@ -79,6 +79,12 @@ process.on('SIGINT', function () {
 
 // ###################
 
+// ################### Global vars
+
+export const nrRandomSongsToAdd = 3;
+
+// ###################
+
 const main = async () => {
 	try {
 		// Initialize Client (sapphire)
@@ -99,6 +105,10 @@ const main = async () => {
 		console.log('Clear old requests');
 		await RequestService.cleanAllRequests();
 		console.log('Cleared!');
+
+		// "Clean commands"
+		// const commands = await client.application?.commands.fetch();
+		// commands?.each((command) => command.delete().then(console.log).catch(console.error));
 	} catch (error) {
 		console.log(error);
 		client.destroy();
