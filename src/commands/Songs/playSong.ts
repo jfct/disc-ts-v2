@@ -3,7 +3,6 @@ import { ApplyOptions } from '@sapphire/decorators';
 import { ChatInputCommand, Command, CommandOptions, RegisterBehavior } from '@sapphire/framework';
 import { VoiceChannel } from 'discord.js';
 import { EmbedComponents } from '../../components/Embeds.components';
-import { RequestService } from '../../entities/request/request.service';
 import { errorCodes, errorMessage } from '../../errors/errorMessages';
 import { matchYoutubeUrl } from '../../lib/utils';
 import { Voice } from '../../lib/Voice';
@@ -15,6 +14,8 @@ import { User } from '../../models/user.model';
 })
 export class playSong extends Command {
 	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
+		const guildIds = process.env.MAIN_GUILD ? [process.env.MAIN_GUILD] : [];
+
 		registry.registerChatInputCommand(
 			(builder) =>
 				builder
@@ -26,7 +27,7 @@ export class playSong extends Command {
 							.setDescription('Play/Adicionar a lista')
 							.addStringOption((option) => option.setName('url').setDescription('URL'))
 					),
-			{ behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
+			{ behaviorWhenNotIdentical: RegisterBehavior.Overwrite, guildIds }
 		);
 	}
 
@@ -43,6 +44,9 @@ export class playSong extends Command {
 		// If user is in voiceChannel
 		if (Boolean(voiceChannel) && voiceChannel instanceof VoiceChannel) {
 			const subcommand = interaction.options.getSubcommand(true);
+
+			// Need to defer reply due to the time it's taking to get the stream
+			await interaction.deferReply();
 
 			if (subcommand === 'url') {
 				return await this.playSong(interaction, voiceChannel);
@@ -73,19 +77,18 @@ export class playSong extends Command {
 				req.channelRequested = interaction.channelId;
 				req.title = `${embed.title}`;
 
-				await RequestService.create(req);
-				return interaction.reply({ ephemeral: true, content: 'Adicionado manuh', embeds: [embed] });
+				return interaction.editReply({ content: 'Adicionado manuh', embeds: [embed] }).catch((err) => console.log(err));
 			}
 
 			// Adds the music to play
 			await Voice.playUrl(voiceChannel, link);
 
-			return interaction.reply({ content: 'A adicionar musica', embeds: [embed] });
+			return interaction.editReply({ content: 'A adicionar musica', embeds: [embed] }).catch((err) => console.log(err));
 		}
 		return this.returnBadURL(interaction);
 	}
 
 	private returnBadURL(interaction: Command.ChatInputInteraction) {
-		return interaction.reply({ ephemeral: true, content: errorMessage[errorCodes.BAD_URL] });
+		return interaction.editReply({ content: errorMessage[errorCodes.BAD_URL] });
 	}
 }

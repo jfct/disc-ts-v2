@@ -8,6 +8,8 @@ import { GenreService } from '../../entities/genre/genre.service';
 })
 export class removeGenre extends Command {
 	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
+		const guildIds = process.env.MAIN_GUILD ? [process.env.MAIN_GUILD] : [];
+
 		registry.registerChatInputCommand(
 			(builder) =>
 				builder
@@ -19,7 +21,7 @@ export class removeGenre extends Command {
 							.setDescription('Id para remover')
 							.addStringOption((option) => option.setName('id').setDescription('Insere o id do genre para remover'))
 					),
-			{ behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
+			{ behaviorWhenNotIdentical: RegisterBehavior.Overwrite, guildIds }
 		);
 	}
 

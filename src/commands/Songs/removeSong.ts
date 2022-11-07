@@ -7,6 +7,8 @@ import { SongService } from '../../entities/song/song.service';
 })
 export class removeSong extends Command {
 	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
+		const guildIds = process.env.MAIN_GUILD ? [process.env.MAIN_GUILD] : [];
+
 		registry.registerChatInputCommand(
 			(builder) =>
 				builder
@@ -18,7 +20,7 @@ export class removeSong extends Command {
 							.setDescription('Song Id para apagar')
 							.addStringOption((option) => option.setName('id').setDescription('Song id para remover'))
 					),
-			{ behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
+			{ behaviorWhenNotIdentical: RegisterBehavior.Overwrite, guildIds }
 		);
 	}
 

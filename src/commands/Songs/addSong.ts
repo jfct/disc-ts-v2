@@ -12,6 +12,8 @@ import { matchYoutubeUrl } from '../../lib/utils';
 })
 export class addSong extends Command {
 	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
+		const guildIds = process.env.MAIN_GUILD ? [process.env.MAIN_GUILD] : [];
+
 		registry.registerChatInputCommand(
 			(builder) =>
 				builder
@@ -23,7 +25,7 @@ export class addSong extends Command {
 							.setDescription('Adicionar musica BD')
 							.addStringOption((option) => option.setName('url').setDescription('URL'))
 					),
-			{ behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
+			{ behaviorWhenNotIdentical: RegisterBehavior.Overwrite, guildIds }
 		);
 	}
 

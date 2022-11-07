@@ -9,6 +9,8 @@ import { Genre } from '../../models/genre.model';
 })
 export class addGenre extends Command {
 	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
+		const guildIds = process.env.MAIN_GUILD ? [process.env.MAIN_GUILD] : [];
+
 		registry.registerChatInputCommand(
 			(builder) =>
 				builder
@@ -20,7 +22,7 @@ export class addGenre extends Command {
 							.setDescription('Nome para o novo genre')
 							.addStringOption((option) => option.setName('genre').setDescription('Insere o nome do novo genero'))
 					),
-			{ behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
+			{ behaviorWhenNotIdentical: RegisterBehavior.Overwrite, guildIds }
 		);
 	}
 

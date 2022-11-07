@@ -9,6 +9,8 @@ import { SongService } from '../../entities/song/song.service';
 })
 export class editSong extends Command {
 	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
+		const guildIds = process.env.MAIN_GUILD ? [process.env.MAIN_GUILD] : [];
+
 		registry.registerChatInputCommand(
 			(builder) =>
 				builder
@@ -20,7 +22,7 @@ export class editSong extends Command {
 							.setDescription('Song Id para editr')
 							.addStringOption((option) => option.setName('id').setDescription('Song id para editar'))
 					),
-			{ behaviorWhenNotIdentical: RegisterBehavior.Overwrite }
+			{ behaviorWhenNotIdentical: RegisterBehavior.Overwrite, guildIds }
 		);
 	}
 

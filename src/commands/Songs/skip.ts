@@ -9,8 +9,11 @@ import { Voice } from '../../lib/Voice';
 })
 export class skip extends Command {
 	public override registerApplicationCommands(registry: ChatInputCommand.Registry) {
+		const guildIds = process.env.MAIN_GUILD ? [process.env.MAIN_GUILD] : [];
+
 		registry.registerChatInputCommand((builder) => builder.setName(this.name).setDescription(this.description), {
-			behaviorWhenNotIdentical: RegisterBehavior.Overwrite
+			behaviorWhenNotIdentical: RegisterBehavior.Overwrite,
+			guildIds
 		});
 	}
 
