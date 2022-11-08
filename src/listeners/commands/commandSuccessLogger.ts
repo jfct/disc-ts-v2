@@ -31,11 +31,10 @@ export class UserEvent extends Listener<typeof Events.MessageCommandSuccess> {
 				id: message.author.id
 			});
 		}
-
 		this.container.logger.debug(`${shard} - ${commandName} ${author} ${sentAt}`);
 
 		// Log command
-		TextLogger.writeRegular(command.name, message.author.username);
+		TextLogger.writeRegular(command, message);
 	}
 
 	public onLoad() {
