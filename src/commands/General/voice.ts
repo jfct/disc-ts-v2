@@ -43,7 +43,7 @@ export class UserCommand extends Command {
 
 					fs.stat(fromPath, function (error, stat) {
 						// Checking directories, true
-						if (stat.isDirectory()) {
+						if (stat != undefined && stat.isDirectory()) {
 							// Reading files inside directories
 							fs.readdir(`${path.resolve('./')}/src/resources/mp3/${file}/`, function (err, files) {
 								mp3array = [];
