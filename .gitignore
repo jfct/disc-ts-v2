@@ -7,3 +7,5 @@ tmp/
 temp/
 src/.env
 discord.db
+src/resources/mp3/*
+logs/*
