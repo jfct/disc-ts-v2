@@ -149,6 +149,56 @@ export class Voice {
 		return true;
 	}
 
+	static async playVoice(voiceChannel: VoiceChannel, voiceLineUrl: string) {
+		let connection = await this.getVC(voiceChannel.guildId);
+
+		if (connection === undefined) {
+			connection = await Voice.createCon(voiceChannel);
+		}
+
+		const player = await Voice.createPlayer(voiceChannel);
+
+		console.log('Playing voice => ', voiceLineUrl);
+		const resource = createAudioResource(voiceLineUrl);
+
+		// If not paused/playing can add
+		if ([
+				AudioPlayerStatus.Playing,
+				AudioPlayerStatus.Paused
+			].indexOf(player.state.status) == -1) {
+			player.play(resource);
+			connection.subscribe(player);
+		}
+		return true;
+	}
+
+	/**
+	 * Leaves the voice channel
+	 */
+	static async join(voiceChannel: VoiceChannel) {
+		const connection = await this.getVC(voiceChannel.guildId);
+
+		if (connection === undefined) {
+			return Voice.createCon(voiceChannel);
+		}
+
+		if (connection.joinConfig.channelId != voiceChannel.id) {
+			connection.destroy();
+			console.log('connectin');
+			return Voice.createCon(voiceChannel);
+		}
+
+		return connection;
+	}
+
+	/**
+	 * Leaves the voice channel
+	 */
+	static async leave(voiceChannel: VoiceChannel) {
+		const connection = await this.getVC(voiceChannel.guildId);
+		return connection?.destroy();
+	}
+
 	// Returns false if no player
 	static async pause(channel: VoiceChannel) {
 		const player: AudioPlayer = audioPlayers[channel.guildId];
