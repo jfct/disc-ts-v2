@@ -28,30 +28,34 @@ export class UserCommand extends Command {
 		let totalFolders = 0;
 
 		if (args[1].toLowerCase() === 'list') {
-			fs.readdir(`${path.resolve('./')}/src/resources/mp3`, function (err, files) {
+			fs.readdir(`${path.resolve('./')}/src/resources/mp3`, { withFileTypes: true }, function (err, files) {
 				if (err) {
 					console.error('Could not list the directory.', err);
 					process.exit(1);
 				}
+
+				// Remove single files
+				files = files.filter((elem) => elem.isDirectory());
+
 				// Determine the total number os folders to a variable to help with the async operations
 				totalFolders = files.length;
 
 				// Reading folders
 				files.forEach(function (file, index) {
 					//fromPath = path.join('././resources/mp3', file);
-					fromPath = `${path.resolve('./')}/src/resources/mp3/${file}/`;
+					fromPath = `${path.resolve('./')}/src/resources/mp3/${file.name}/`;
 
 					fs.stat(fromPath, function (error, stat) {
 						// Checking directories, true
 						if (stat != undefined && stat.isDirectory()) {
 							// Reading files inside directories
-							fs.readdir(`${path.resolve('./')}/src/resources/mp3/${file}/`, function (err, files) {
+							fs.readdir(`${path.resolve('./')}/src/resources/mp3/${file.name}/`, function (err, files) {
 								mp3array = [];
 								files.forEach(function (file, index) {
 									mp3array.push(file.replace(/.mp3/g, ''));
 								});
 
-								embed.addField(file, mp3array.join(' '), true);
+								embed.addField(file.name, mp3array.join(' '), true);
 
 								folderRead++;
 
